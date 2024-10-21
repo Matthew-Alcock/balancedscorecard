@@ -1,0 +1,11 @@
+{
+  "scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start"
+},
+  "devDependencies": {
+    "supabase": "^1.204.3"
+  }
+  
+}

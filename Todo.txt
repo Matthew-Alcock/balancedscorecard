@@ -1,0 +1,4 @@
+Enable RLS in supabase
+Update policies in supabase
+Add functions for aggregation etc
+
