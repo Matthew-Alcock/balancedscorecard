@@ -1,3 +1,5 @@
+"use client"; // Add this line to enable client-side rendering
+
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
