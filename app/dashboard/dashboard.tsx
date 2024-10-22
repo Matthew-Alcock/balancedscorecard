@@ -35,6 +35,7 @@ export default function Dashboard() {
   // State for modals
   const [isGoalModalOpen, setGoalModalOpen] = useState(false);
   const [isDivisionModalOpen, setDivisionModalOpen] = useState(false);
+  const [isEmployeeModalOpen, setEmployeeModalOpen] = useState(false); // Added employee modal state
 
   useEffect(() => {
     fetchGoals();
@@ -129,6 +130,18 @@ export default function Dashboard() {
     }
   }
 
+  async function addEmployee(data: { first_name: string; last_name: string }) {
+    const { error } = await supabase
+      .from('employees')
+      .insert([{ ...data }]);
+
+    if (error) {
+      console.error('Error adding employee:', error);
+    } else {
+      fetchEmployees(); // Refresh employees after adding
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Company Balanced Scorecard</h1>
@@ -193,7 +206,7 @@ export default function Dashboard() {
         <TabsContent value="employees" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Employees</h2>
-            <Button>
+            <Button onClick={() => setEmployeeModalOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add Employee
             </Button>
           </div>
@@ -228,6 +241,16 @@ export default function Dashboard() {
         title="Add New Division"
         fields={[
           { label: 'Division Name', placeholder: 'Enter division name', name: 'name' },
+        ]}
+      />
+      <Modal
+        isOpen={isEmployeeModalOpen}
+        closeModal={() => setEmployeeModalOpen(false)}
+        onSubmit={addEmployee}
+        title="Add New Employee"
+        fields={[
+          { label: 'First Name', placeholder: 'Enter first name', name: 'first_name' },
+          { label: 'Last Name', placeholder: 'Enter last name', name: 'last_name' },
         ]}
       />
     </div>
