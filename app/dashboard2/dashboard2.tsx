@@ -1,4 +1,5 @@
 // app/dashboard2/dashboard2.tsx
+"use client"; 
 
 import React, { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
@@ -12,7 +13,9 @@ const Dashboard2 = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ title: '', owner: '', progress: 0 }); // Adjust as needed
+  
+  // Update formData if necessary
+  const [formData, setFormData] = useState({ title: '', owner: '', progress: 0 });
 
   useEffect(() => {
     const loadData = async () => {
