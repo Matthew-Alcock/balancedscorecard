@@ -1,97 +1,93 @@
-import React, { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { PlusCircle, Users, Building, User } from 'lucide-react'
-import Link from 'next/link'
-import { supabase } from '@/lib/supabaseClient'
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { PlusCircle, Users, Building } from 'lucide-react';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Goal {
-  id: number
-  name: string
-  target: string
-  current: string
+  id: number;
+  name: string;
+  target: string;
+  current: string;
 }
 
 interface Division {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 export default function Dashboard() {
-  const [companyGoals, setCompanyGoals] = useState<Goal[]>([])
-  const [divisions, setDivisions] = useState<Division[]>([])
+  const [companyGoals, setCompanyGoals] = useState<Goal[]>([]);
+  const [divisions, setDivisions] = useState<Division[]>([]);
 
   useEffect(() => {
-    fetchGoals()
-    fetchDivisions()
+    fetchGoals();
+    fetchDivisions();
 
     const goalsSubscription = supabase
       .channel('public:goals')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'goals' }, fetchGoals)
-      .subscribe()
+      .subscribe();
 
     const divisionsSubscription = supabase
       .channel('public:divisions')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'divisions' }, fetchDivisions)
-      .subscribe()
+      .subscribe();
 
     return () => {
-      goalsSubscription.unsubscribe()
-      divisionsSubscription.unsubscribe()
-    }
-  }, [])
+      goalsSubscription.unsubscribe();
+      divisionsSubscription.unsubscribe();
+    };
+  }, []);
 
   async function fetchGoals() {
     const { data, error } = await supabase
       .from('goals')
       .select('*')
-      .eq('level', 'company')
-    
+      .eq('level', 'company');
+
     if (error) {
-      console.error('Error fetching goals:', error)
+      console.error('Error fetching goals:', error);
     } else {
-      setCompanyGoals(data)
+      setCompanyGoals(data);
     }
   }
 
   async function fetchDivisions() {
     const { data, error } = await supabase
       .from('divisions')
-      .select('*')
-    
+      .select('*');
+
     if (error) {
-      console.error('Error fetching divisions:', error)
+      console.error('Error fetching divisions:', error);
     } else {
-      setDivisions(data)
+      setDivisions(data);
     }
   }
 
   async function addGoal() {
     const { data, error } = await supabase
       .from('goals')
-      .insert([
-        { name: 'New Goal', target: '0', current: '0', level: 'company' }
-      ])
-    
+      .insert([{ name: 'New Goal', target: '0', current: '0', level: 'company' }]);
+
     if (error) {
-      console.error('Error adding goal:', error)
+      console.error('Error adding goal:', error);
     } else {
-      fetchGoals()
+      fetchGoals();
     }
   }
 
   async function addDivision() {
     const { data, error } = await supabase
       .from('divisions')
-      .insert([
-        { name: 'New Division' }
-      ])
-    
+      .insert([{ name: 'New Division' }]);
+
     if (error) {
-      console.error('Error adding division:', error)
+      console.error('Error adding division:', error);
     } else {
-      fetchDivisions()
+      fetchDivisions();
     }
   }
 
@@ -106,6 +102,7 @@ export default function Dashboard() {
           <TabsTrigger value="employees">Employees</TabsTrigger>
         </TabsList>
         
+        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Company Goals</h2>
@@ -129,7 +126,8 @@ export default function Dashboard() {
           </div>
         </TabsContent>
         
-        <TabsContent value="divisions">
+        {/* Divisions Tab */}
+        <TabsContent value="divisions" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Divisions</h2>
             <Button onClick={addDivision}>
@@ -155,7 +153,8 @@ export default function Dashboard() {
           </div>
         </TabsContent>
         
-        <TabsContent value="employees">
+        {/* Employees Tab */}
+        <TabsContent value="employees" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Employees</h2>
             <Button>
@@ -178,5 +177,5 @@ export default function Dashboard() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
