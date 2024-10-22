@@ -7,7 +7,7 @@ import { Button } from "../components/ui/button";
 import { PlusCircle, Users, Building } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient';
-import Modal from '../components/modal'; // Import the Modal component
+import Modal from '../components/Modal'; // Import the Modal component
 
 interface Goal {
   id: number;
