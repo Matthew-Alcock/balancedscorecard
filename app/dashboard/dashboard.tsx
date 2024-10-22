@@ -20,14 +20,35 @@ interface Division {
   name: string;
 }
 
+interface Company {
+  id: number;
+  name: string;
+}
+
+interface Employee {
+  id: number;
+  first_name: string;
+  last_name: string;
+}
+
+interface KPI {
+  id: number;
+  name: string;
+  current_value: number;
+  target_value: number;
+  unit: string;
+}
+
 export default function Dashboard() {
   const [companyGoals, setCompanyGoals] = useState<Goal[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [kpis, setKpis] = useState<KPI[]>([]);
   const [activeTab, setActiveTab] = useState<string>('overview');
 
   useEffect(() => {
-    fetchGoals();
-    fetchDivisions();
+    fetchData();
 
     const goalsSubscription = supabase
       .channel('public:goals')
@@ -44,6 +65,16 @@ export default function Dashboard() {
       divisionsSubscription.unsubscribe();
     };
   }, []);
+
+  async function fetchData() {
+    await Promise.all([
+      fetchGoals(),
+      fetchDivisions(),
+      fetchCompanies(),
+      fetchEmployees(),
+      fetchKpis(),
+    ]);
+  }
 
   async function fetchGoals() {
     const { data, error } = await supabase
@@ -67,6 +98,42 @@ export default function Dashboard() {
       console.error('Error fetching divisions:', error);
     } else {
       setDivisions(data || []);
+    }
+  }
+
+  async function fetchCompanies() {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching companies:', error);
+    } else {
+      setCompanies(data || []);
+    }
+  }
+
+  async function fetchEmployees() {
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching employees:', error);
+    } else {
+      setEmployees(data || []);
+    }
+  }
+
+  async function fetchKpis() {
+    const { data, error } = await supabase
+      .from('kpis')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching KPIs:', error);
+    } else {
+      setKpis(data || []);
     }
   }
 
@@ -103,6 +170,8 @@ export default function Dashboard() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="divisions">Divisions</TabsTrigger>
           <TabsTrigger value="employees">Employees</TabsTrigger>
+          <TabsTrigger value="companies">Companies</TabsTrigger>
+          <TabsTrigger value="kpis">KPIs</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
@@ -161,19 +230,55 @@ export default function Dashboard() {
               <PlusCircle className="mr-2 h-4 w-4" /> Add Employee
             </Button>
           </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Employee Directory</CardTitle>
-              <CardDescription>View and manage employee KPIs</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/employees">
-                <Button>
-                  <Users className="mr-2 h-4 w-4" /> View All Employees
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {employees.map((employee) => (
+              <Card key={employee.id}>
+                <CardHeader>
+                  <CardTitle>{employee.first_name} {employee.last_name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Link href={`/employees/${employee.id}`}>
+                    <Button variant="outline" className="w-full">View Details</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="companies" className="space-y-4">
+          <h2 className="text-2xl font-semibold">Companies</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {companies.map((company) => (
+              <Card key={company.id}>
+                <CardHeader>
+                  <CardTitle>{company.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Link href={`/companies/${company.id}`}>
+                    <Button variant="outline" className="w-full">View Details</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="kpis" className="space-y-4">
+          <h2 className="text-2xl font-semibold">KPIs</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {kpis.map((kpi) => (
+              <Card key={kpi.id}>
+                <CardHeader>
+                  <CardTitle>{kpi.name}</CardTitle>
+                  <CardDescription>{kpi.current_value} / {kpi.target_value} {kpi.unit}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">Current Value: {kpi.current_value}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
