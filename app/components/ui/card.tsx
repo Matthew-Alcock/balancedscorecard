@@ -8,8 +8,13 @@ export const CardHeader: React.FC<{ children: React.ReactNode }> = ({ children }
   return <div className="border-b pb-2 mb-2">{children}</div>;
 };
 
-export const CardTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <h3 className="font-bold">{children}</h3>;
+interface CardTitleProps {
+  children: React.ReactNode;
+  className?: string; // Add className prop
+}
+
+export const CardTitle: React.FC<CardTitleProps> = ({ children, className }) => {
+  return <h3 className={`font-bold ${className}`}>{children}</h3>; // Apply className here
 };
 
 export const CardDescription: React.FC<{ children: React.ReactNode }> = ({ children }) => {
