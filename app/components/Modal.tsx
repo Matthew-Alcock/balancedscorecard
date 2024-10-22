@@ -1,58 +1,76 @@
-// components/Modal.tsx
-import { Dialog } from '@headlessui/react';
-import { Fragment } from 'react';
-import { Button } from './ui/button';
+import React, { useState } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
   closeModal: () => void;
   onSubmit: (data: any) => void;
   title: string;
-  fields: { label: string; placeholder: string; name: string }[];
+  fields: Array<{ 
+    label: string; 
+    placeholder?: string; 
+    name: string; 
+    type?: 'text' | 'dropdown' | 'date'; 
+    options?: { label: string; value: string }[]; // For dropdown options
+  }>;
+  initialValues?: any;
 }
 
-export default function Modal({ isOpen, closeModal, onSubmit, title, fields }: ModalProps) {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget as HTMLFormElement); // Cast to HTMLFormElement
-    const data: { [key: string]: string } = {};
-    
-    fields.forEach(field => {
-      data[field.name] = formData.get(field.name) as string;
-    });
+const Modal: React.FC<ModalProps> = ({ isOpen, closeModal, onSubmit, title, fields, initialValues }) => {
+  const [formData, setFormData] = useState(initialValues || {});
 
-    onSubmit(data);
-    closeModal();
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+    closeModal(); // Close modal after submission
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <Dialog as="div" open={isOpen} onClose={closeModal} className="relative z-10">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center">
-        <Dialog.Panel className="mx-auto w-full max-w-md rounded bg-white p-6">
-          <Dialog.Title className="text-lg font-bold">{title}</Dialog.Title>
-          <form onSubmit={handleSubmit} className="mt-4">
-            {fields.map((field) => (
-              <div key={field.name} className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  {field.label}
-                </label>
-                <input
-                  name={field.name}
-                  type="text"
-                  placeholder={field.placeholder}
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+    <div className="modal">
+      <div className="modal-content">
+        <h2>{title}</h2>
+        <form onSubmit={handleSubmit}>
+          {fields.map((field) => (
+            <div key={field.name} className="mb-4">
+              <label>{field.label}</label>
+              {field.type === 'dropdown' ? (
+                <select name={field.name} onChange={handleInputChange} value={formData[field.name] || ''}>
+                  {field.options?.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : field.type === 'date' ? (
+                <input 
+                  type="date" 
+                  name={field.name} 
+                  onChange={handleInputChange} 
+                  value={formData[field.name] || ''} 
                 />
-              </div>
-            ))}
-            <div className="flex justify-end">
-              <Button type="button" onClick={closeModal} variant="outline">Cancel</Button>
-              <Button type="submit" className="ml-2">Submit</Button>
+              ) : (
+                <input 
+                  type="text" 
+                  placeholder={field.placeholder} 
+                  name={field.name} 
+                  onChange={handleInputChange} 
+                  value={formData[field.name] || ''} 
+                />
+              )}
             </div>
-          </form>
-        </Dialog.Panel>
+          ))}
+          <button type="submit">Submit</button>
+          <button type="button" onClick={closeModal}>Cancel</button>
+        </form>
       </div>
-    </Dialog>
+    </div>
   );
-}
+};
+
+export default Modal;

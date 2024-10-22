@@ -204,7 +204,7 @@ export default function Dashboard() {
         <TabsContent value="employees" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Employees</h2>
-            <Button onClick={() => setEmployeeModalOpen(true)}> {/* Update to open employee modal */}
+            <Button>
               <PlusCircle className="mr-2 h-4 w-4" /> Add Employee
             </Button>
           </div>
@@ -212,15 +212,8 @@ export default function Dashboard() {
             {employees.map((employee) => (
               <Card key={employee.id}>
                 <CardHeader>
-                  <CardTitle>
-                    <Link href={`/employees/${employee.id}`}>{employee.first_name} {employee.last_name}</Link>
-                  </CardTitle>
+                  <CardTitle>{employee.first_name} {employee.last_name}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Link href={`/employees/${employee.id}`}>
-                    <Button variant="outline" className="w-full">View Scorecard</Button>
-                  </Link>
-                </CardContent>
               </Card>
             ))}
           </div>
@@ -234,12 +227,21 @@ export default function Dashboard() {
         onSubmit={addGoal}
         title="Add New Goal"
         fields={[
-          { label: 'Goal Name', placeholder: 'Enter goal name', name: 'name' },
-          { label: 'Target', placeholder: 'Enter target', name: 'target' },
-          { label: 'Current', placeholder: 'Enter current value', name: 'current' },
-          { label: 'Owner', placeholder: 'Enter owner name', name: 'owner' }, // New field for owner
-          { label: 'Progress (%)', placeholder: 'Enter progress', name: 'progress' }, // New field for progress
+          { label: 'Goal Name', placeholder: 'Enter goal name', name: 'name', type: 'text' },
+          { label: 'Description', placeholder: 'Enter goal description', name: 'description', type: 'text' },
+          {
+            label: 'Level',
+            name: 'level',
+            type: 'dropdown',
+            options: [
+              { label: 'Company', value: 'company' },
+              { label: 'Division', value: 'division' }
+            ]
+          },
+          { label: 'Target', placeholder: 'Enter target', name: 'target', type: 'text' },
+          { label: 'Due Date', name: 'due_date', type: 'date' },
         ]}
+        initialValues={{ start_date: new Date().toISOString().split('T')[0], status: 'Not Started' }}
       />
       <Modal
         isOpen={isDivisionModalOpen}
