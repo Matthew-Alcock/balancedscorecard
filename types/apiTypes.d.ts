@@ -2,6 +2,7 @@
 
 // Type representing an Employee
 export interface Employee {
+    role: ReactNode;
     id: string;                   // Unique identifier for the employee
     name: string;                 // Name of the employee
     email: string;                // Email address of the employee

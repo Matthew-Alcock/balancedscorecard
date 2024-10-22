@@ -1,6 +1,6 @@
 // app/dashboard2/dashboard2.tsx
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Modal from '../components/Modal';
@@ -50,6 +50,22 @@ const Dashboard2 = () => {
     }
   };
 
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+      const response = await fetch(`/api/goals?id=${goalId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setGoals(goals.filter(goal => goal.id !== goalId));
+        toast.success('Goal deleted successfully!');
+      } else {
+        throw new Error('Failed to delete goal');
+      }
+    } catch (error) {
+      toast.error('Error deleting goal: ' + error.message);
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
@@ -82,7 +98,7 @@ const Dashboard2 = () => {
                     }}>
                       Edit
                     </button>
-                    <button onClick={/* add delete function here */}>Delete</button>
+                    <button onClick={() => handleDeleteGoal(goal.id)}>Delete</button>
                   </td>
                 </tr>
               ))}
@@ -105,7 +121,7 @@ const Dashboard2 = () => {
               {employees.map((employee) => (
                 <tr key={employee.id}>
                   <td>{employee.name}</td>
-                  <td>{employee.division}</td>
+                  <td>{employee.divisionId}</td>
                   <td>{employee.role}</td>
                   <td>
                     <button onClick={/* Link to employee profile */}>View Profile</button>
@@ -131,9 +147,9 @@ const Dashboard2 = () => {
             <tbody>
               {kpis.map((kpi) => (
                 <tr key={kpi.id}>
-                  <td>{kpi.title}</td>
-                  <td>{kpi.description}</td>
-                  <td>{kpi.currentValue}</td>
+                  <td>{kpi.name}</td>
+                  <td>{kpi.name}</td>
+                  <td>{kpi.actualValue}</td>
                   <td>{kpi.targetValue}</td>
                   <td>
                     <button onClick={/* add edit function */}>Edit</button>
@@ -190,4 +206,3 @@ const Dashboard2 = () => {
 };
 
 export default Dashboard2;
-
