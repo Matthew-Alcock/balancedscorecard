@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+/* import React, { useEffect, useState } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "/app/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { supabase } from '@/lib/supabaseClient'
+import { supabase } from '/lib/supabaseClient'
 
 interface KPI {
   id: number
@@ -92,4 +92,4 @@ export default function EmployeeDashboard({ employeeId }: { employeeId: number }
       </div>
     </div>
   )
-}
+} */
