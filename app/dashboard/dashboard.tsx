@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
-import { PlusCircle, Users, Building, User } from 'lucide-react';
+import { PlusCircle, Users, Building } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -23,6 +23,7 @@ interface Division {
 export default function Dashboard() {
   const [companyGoals, setCompanyGoals] = useState<Goal[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('overview');
 
   useEffect(() => {
     fetchGoals();
@@ -53,7 +54,7 @@ export default function Dashboard() {
     if (error) {
       console.error('Error fetching goals:', error);
     } else {
-      setCompanyGoals(data);
+      setCompanyGoals(data || []);
     }
   }
 
@@ -65,12 +66,12 @@ export default function Dashboard() {
     if (error) {
       console.error('Error fetching divisions:', error);
     } else {
-      setDivisions(data);
+      setDivisions(data || []);
     }
   }
 
   async function addGoal() {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('goals')
       .insert([{ name: 'New Goal', target: '0', current: '0', level: 'company' }]);
 
@@ -82,7 +83,7 @@ export default function Dashboard() {
   }
 
   async function addDivision() {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('divisions')
       .insert([{ name: 'New Division' }]);
 
@@ -97,14 +98,13 @@ export default function Dashboard() {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Company Balanced Scorecard</h1>
       
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="divisions">Divisions</TabsTrigger>
           <TabsTrigger value="employees">Employees</TabsTrigger>
         </TabsList>
         
-        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Company Goals</h2>
@@ -128,7 +128,6 @@ export default function Dashboard() {
           </div>
         </TabsContent>
         
-        {/* Divisions Tab */}
         <TabsContent value="divisions" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Divisions</h2>
@@ -155,7 +154,6 @@ export default function Dashboard() {
           </div>
         </TabsContent>
         
-        {/* Employees Tab */}
         <TabsContent value="employees" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Employees</h2>
