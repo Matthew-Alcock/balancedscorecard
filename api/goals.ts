@@ -4,62 +4,46 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  switch (req.method) {
-    case 'GET':
-      try {
+  try {
+    switch (req.method) {
+      case 'GET':
         const goals = await prisma.goal.findMany({
+          where: {
+            // Add filters based on req.query if necessary
+          },
           include: {
             objectives: true,
           },
         });
         res.status(200).json(goals);
-      } catch (error) {
-        console.error('Error fetching goals:', error);
-        res.status(500).json({ error: 'Failed to fetch goals' });
-      }
-      break;
-
-    case 'POST':
-      try {
+        break;
+      case 'POST':
         const newGoal = await prisma.goal.create({
           data: req.body,
         });
         res.status(201).json(newGoal);
-      } catch (error) {
-        console.error('Error creating goal:', error);
-        res.status(500).json({ error: 'Failed to create goal' });
-      }
-      break;
-
-    case 'PUT':
-      try {
-        const { id, ...updateData } = req.body;
+        break;
+      case 'PUT':
+        // Implement updating a goal here
         const updatedGoal = await prisma.goal.update({
-          where: { id },
-          data: updateData,
+          where: { id: req.body.id },
+          data: req.body,
         });
         res.status(200).json(updatedGoal);
-      } catch (error) {
-        console.error('Error updating goal:', error);
-        res.status(500).json({ error: 'Failed to update goal' });
-      }
-      break;
-
-    case 'DELETE':
-      try {
-        const { id } = req.body;
+        break;
+      case 'DELETE':
+        // Implement deleting a goal here
         await prisma.goal.delete({
-          where: { id },
+          where: { id: req.query.id },
         });
-        res.status(204).end();
-      } catch (error) {
-        console.error('Error deleting goal:', error);
-        res.status(500).json({ error: 'Failed to delete goal' });
-      }
-      break;
-
-    default:
-      res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
-      res.status(405).end(`Method ${req.method} Not Allowed`);
+        res.status(204).end(); // No content
+        break;
+      default:
+        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
+        res.status(405).end(`Method ${req.method} Not Allowed`);
+    }
+  } catch (error) {
+    console.error('Error in API handler:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 }
