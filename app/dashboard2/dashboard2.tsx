@@ -1,21 +1,18 @@
 // app/dashboard2/dashboard2.tsx
 
-"use client";
-
 import React, { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Modal from '../components/Modal';
 import { fetchGoals, fetchEmployees, fetchKPIs } from '../../api/goalsApi';
-import { Goal, Employee, KPI } from '../../types/apiTypes';
+import { Goal, Employee, KPI } from '../../types/apiTypes'; // Adjust imports according to your types
 
 const Dashboard2 = () => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
-  const [formData, setFormData] = useState({ title: '', owner: '', progress: 0 });
+  const [formData, setFormData] = useState({ title: '', owner: '', progress: 0 }); // Adjust as needed
 
   useEffect(() => {
     const loadData = async () => {
@@ -30,21 +27,25 @@ const Dashboard2 = () => {
     loadData();
   }, []);
 
-  const handleAddGoal = async () => {
-    // Implementation for adding a goal
-  };
-
-  const handleDeleteGoal = async (goalId: string) => {
+  const handleAddGoal = async (data: any) => {
     try {
-      const response = await fetch(`/api/goals?id=${goalId}`, { method: 'DELETE' });
-      if (response.ok) {
-        setGoals(goals.filter(goal => goal.id !== goalId));
-        toast.success('Goal deleted successfully!');
+      const newGoal = await fetch('/api/goals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data), // Use the data passed from the modal
+      });
+      if (newGoal.ok) {
+        const goalData = await newGoal.json();
+        setGoals([...goals, goalData]);
+        toast.success('Goal added successfully!');
+        setModalOpen(false);
       } else {
-        throw new Error('Failed to delete goal');
+        throw new Error('Failed to add goal');
       }
     } catch (error) {
-      toast.error('Error deleting goal: ' + error.message);
+      toast.error('Error adding goal: ' + error.message);
     }
   };
 
@@ -55,19 +56,17 @@ const Dashboard2 = () => {
         <button onClick={() => setModalOpen(true)}>Add New Goal</button>
       </header>
 
-      <div className="dashboard-content">
-        {/* Your sections for Goals, Employees, and KPIs */}
-      </div>
-
       <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={selectedGoal ? 'Edit Goal' : 'Add New Goal'}
-      >
-        <form onSubmit={(e) => { e.preventDefault(); handleAddGoal(); }}>
-          {/* Your form fields */}
-        </form>
-      </Modal>
+        isOpen={modalOpen}
+        closeModal={() => setModalOpen(false)}
+        onSubmit={handleAddGoal}
+        title="Add New Goal"
+        fields={[
+          { label: 'Goal Title', placeholder: 'Enter goal title', name: 'title' },
+          { label: 'Owner', placeholder: 'Enter owner ID', name: 'owner' },
+          { label: 'Progress', placeholder: 'Enter progress percentage', name: 'progress' },
+        ]}
+      />
 
       <ToastContainer />
     </div>
