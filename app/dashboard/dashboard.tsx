@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Button } from "../components/ui/button";
 import { PlusCircle, Users, Building } from 'lucide-react';
 import Link from 'next/link';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Goal {
   id: number;
@@ -25,157 +26,179 @@ interface Employee {
   last_name: string;
 }
 
-interface Kpi {
-  id: number;
-  name: string;
-  current_value: number;
-  target_value: number;
-  unit: string;
-}
-
 export default function Dashboard() {
   const [companyGoals, setCompanyGoals] = useState<Goal[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [kpis, setKpis] = useState<Kpi[]>([]);
-
-  const fetchData = async () => {
-    const [goalsRes, divisionsRes, employeesRes, kpisRes] = await Promise.all([
-      fetch('/api/goals'),
-      fetch('/api/divisions'),
-      fetch('/api/employees'),
-      fetch('/api/kpis'),
-    ]);
-    const [goals, divisions, employees, kpis] = await Promise.all([
-      goalsRes.json(),
-      divisionsRes.json(),
-      employeesRes.json(),
-      kpisRes.json(),
-    ]);
-    setCompanyGoals(goals);
-    setDivisions(divisions);
-    setEmployees(employees);
-    setKpis(kpis);
-  };
 
   useEffect(() => {
-    fetchData();
+    fetchGoals();
+    fetchDivisions();
+    fetchEmployees();
   }, []);
 
-  const addGoal = async () => {
-    // Implement adding a new goal
-  };
+  async function fetchGoals() {
+    const { data, error } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('level', 'company');
 
-  const updateGoal = async (id: number, updateData: Partial<Goal>) => {
-    const response = await fetch('/api/goals', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id, ...updateData }),
-    });
-
-    if (response.ok) {
-      fetchData(); // Refresh data after update
+    if (error) {
+      console.error('Error fetching goals:', error);
+    } else {
+      setCompanyGoals(data || []);
     }
-  };
+  }
 
-  const deleteGoal = async (id: number) => {
-    const response = await fetch('/api/goals', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id }),
-    });
+  async function fetchDivisions() {
+    const { data, error } = await supabase
+      .from('divisions')
+      .select('*');
 
-    if (response.ok) {
-      fetchData(); // Refresh data after delete
+    if (error) {
+      console.error('Error fetching divisions:', error);
+    } else {
+      setDivisions(data || []);
     }
-  };
+  }
+
+  async function fetchEmployees() {
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching employees:', error);
+    } else {
+      setEmployees(data || []);
+    }
+  }
+
+  async function addGoal() {
+    const { error } = await supabase
+      .from('goals')
+      .insert([{ name: 'New Goal', target: '0', current: '0', level: 'company' }]);
+
+    if (error) {
+      console.error('Error adding goal:', error);
+    } else {
+      fetchGoals(); // Refresh goals after adding
+    }
+  }
+
+  async function deleteGoal(id: number) {
+    const { error } = await supabase
+      .from('goals')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting goal:', error);
+    } else {
+      fetchGoals(); // Refresh goals after deleting
+    }
+  }
+
+  async function addDivision() {
+    const { error } = await supabase
+      .from('divisions')
+      .insert([{ name: 'New Division' }]);
+
+    if (error) {
+      console.error('Error adding division:', error);
+    } else {
+      fetchDivisions(); // Refresh divisions after adding
+    }
+  }
+
+  async function deleteDivision(id: number) {
+    const { error } = await supabase
+      .from('divisions')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting division:', error);
+    } else {
+      fetchDivisions(); // Refresh divisions after deleting
+    }
+  }
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <Tabs defaultValue="goals" className="w-full">
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6">Company Balanced Scorecard</h1>
+
+      <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="goals">Goals</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="divisions">Divisions</TabsTrigger>
           <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="kpis">KPIs</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="goals">
-          <div>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold">Company Goals</h2>
             <Button onClick={addGoal}>
-              <PlusCircle /> Add Goal
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Goal
             </Button>
-            {companyGoals.map(goal => (
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {companyGoals.map((goal) => (
               <Card key={goal.id}>
                 <CardHeader>
                   <CardTitle>{goal.name}</CardTitle>
-                  <CardDescription>
-                    Target: {goal.target}, Current: {goal.current}
-                  </CardDescription>
+                  <CardDescription>Target: {goal.target}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={() => updateGoal(goal.id, { /* new values */ })}>Edit</Button>
-                  <Button onClick={() => deleteGoal(goal.id)}>Delete</Button>
+                  <p className="text-2xl font-bold">{goal.current}</p>
+                  <p className="text-sm text-muted-foreground">Current Progress</p>
+                  <Button onClick={() => deleteGoal(goal.id)} variant="destructive">Delete Goal</Button>
                 </CardContent>
               </Card>
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="divisions">
-          <div>
-            <Button onClick={() => {/* Add Division Logic */}}>Add Division</Button>
-            {divisions.map(division => (
+        <TabsContent value="divisions" className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Divisions</h2>
+            <Button onClick={addDivision}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Division
+            </Button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {divisions.map((division) => (
               <Card key={division.id}>
                 <CardHeader>
-                  <CardTitle>{division.name}</CardTitle>
+                  <CardTitle className="flex items-center">
+                    <Building className="mr-2 h-4 w-4" />
+                    {division.name}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Button onClick={() => {/* Update Division Logic */}}>Edit</Button>
-                  <Button onClick={() => {/* Delete Division Logic */}}>Delete</Button>
+                  <Link href={`/divisions/${division.id}`}>
+                    <Button variant="outline" className="w-full">View Scorecard</Button>
+                  </Link>
+                  <Button onClick={() => deleteDivision(division.id)} variant="destructive">Delete Division</Button>
                 </CardContent>
               </Card>
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="employees">
-          <div>
-            <Button onClick={() => {/* Add Employee Logic */}}>Add Employee</Button>
-            {employees.map(employee => (
+        <TabsContent value="employees" className="space-y-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Employees</h2>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Employee
+            </Button>
+          </div>
+          <div className="grid gap-4">
+            {employees.map((employee) => (
               <Card key={employee.id}>
                 <CardHeader>
                   <CardTitle>{employee.first_name} {employee.last_name}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Button onClick={() => {/* Update Employee Logic */}}>Edit</Button>
-                  <Button onClick={() => {/* Delete Employee Logic */}}>Delete</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="kpis">
-          <div>
-            <Button onClick={() => {/* Add KPI Logic */}}>Add KPI</Button>
-            {kpis.map(kpi => (
-              <Card key={kpi.id}>
-                <CardHeader>
-                  <CardTitle>{kpi.name}</CardTitle>
-                  <CardDescription>
-                    Current: {kpi.current_value} {kpi.unit}, Target: {kpi.target_value} {kpi.unit}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => {/* Update KPI Logic */}}>Edit</Button>
-                  <Button onClick={() => {/* Delete KPI Logic */}}>Delete</Button>
-                </CardContent>
               </Card>
             ))}
           </div>
