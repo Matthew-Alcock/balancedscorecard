@@ -7,13 +7,16 @@ import { Button } from "../components/ui/button";
 import { PlusCircle, Users, Building } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient';
-import Modal from '../components/Modal'; // Import the Modal component
+import Modal from '../components/Modal';
+import { toast } from 'react-toastify'; // Add this import for toast notifications
 
 interface Goal {
   id: number;
   name: string;
   target: string;
   current: string;
+  owner: string; // Assuming owner is part of the goal
+  progress: number; // Assuming progress is a percentage or similar
 }
 
 interface Division {
@@ -25,6 +28,7 @@ interface Employee {
   id: number;
   first_name: string;
   last_name: string;
+  divisionId: number; // Assuming division is related
 }
 
 export default function Dashboard() {
@@ -32,10 +36,9 @@ export default function Dashboard() {
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   
-  // State for modals
   const [isGoalModalOpen, setGoalModalOpen] = useState(false);
   const [isDivisionModalOpen, setDivisionModalOpen] = useState(false);
-  const [isEmployeeModalOpen, setEmployeeModalOpen] = useState(false); // Added employee modal state
+  const [isEmployeeModalOpen, setEmployeeModalOpen] = useState(false); // State for employee modal
 
   useEffect(() => {
     fetchGoals();
@@ -80,7 +83,7 @@ export default function Dashboard() {
     }
   }
 
-  async function addGoal(data: { name: string; target: string; current: string; level: string }) {
+  async function addGoal(data: { name: string; target: string; current: string; owner: string; progress: number }) {
     const { error } = await supabase
       .from('goals')
       .insert([{ ...data, level: 'company' }]);
@@ -88,7 +91,8 @@ export default function Dashboard() {
     if (error) {
       console.error('Error adding goal:', error);
     } else {
-      fetchGoals(); // Refresh goals after adding
+      toast.success('Goal added successfully!'); // Show success message
+      fetchGoals();
     }
   }
 
@@ -101,7 +105,8 @@ export default function Dashboard() {
     if (error) {
       console.error('Error deleting goal:', error);
     } else {
-      fetchGoals(); // Refresh goals after deleting
+      toast.success('Goal deleted successfully!'); // Show success message
+      fetchGoals();
     }
   }
 
@@ -113,24 +118,12 @@ export default function Dashboard() {
     if (error) {
       console.error('Error adding division:', error);
     } else {
-      fetchDivisions(); // Refresh divisions after adding
+      toast.success('Division added successfully!'); // Show success message
+      fetchDivisions();
     }
   }
 
-  async function deleteDivision(id: number) {
-    const { error } = await supabase
-      .from('divisions')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting division:', error);
-    } else {
-      fetchDivisions(); // Refresh divisions after deleting
-    }
-  }
-
-  async function addEmployee(data: { first_name: string; last_name: string }) {
+  async function addEmployee(data: { first_name: string; last_name: string; divisionId: number }) {
     const { error } = await supabase
       .from('employees')
       .insert([{ ...data }]);
@@ -138,7 +131,8 @@ export default function Dashboard() {
     if (error) {
       console.error('Error adding employee:', error);
     } else {
-      fetchEmployees(); // Refresh employees after adding
+      toast.success('Employee added successfully!'); // Show success message
+      fetchEmployees();
     }
   }
 
@@ -153,7 +147,7 @@ export default function Dashboard() {
           <TabsTrigger value="employees">Employees</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview" className="space-y-4 overflow-y-auto"> {/* Make this section scrollable */}
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Company Goals</h2>
             <Button onClick={() => setGoalModalOpen(true)}>
@@ -162,16 +156,21 @@ export default function Dashboard() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {companyGoals.map((goal) => (
-              <Card key={goal.id}>
-                <CardHeader>
-                  <CardTitle>{goal.name}</CardTitle>
-                  <p>Target: {goal.target}</p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">{goal.current}</p>
-                  <Button onClick={() => deleteGoal(goal.id)} variant="destructive">Delete Goal</Button>
-                </CardContent>
-              </Card>
+              <Card key={goal.id} onClick={() => { /* Handle click */ }}>
+              <CardHeader>
+                <CardTitle>{goal.name}</CardTitle>
+                <p>Target: {goal.target}</p>
+                <p>Owner: {goal.owner}</p>
+                <p>Progress: {goal.progress}%</p>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{goal.current}</p>
+                <Button onClick={(e) => { 
+                  e.stopPropagation(); // Prevent triggering the card click event
+                  deleteGoal(goal.id);
+                }} variant="destructive">Delete Goal</Button>
+              </CardContent>
+            </Card>
             ))}
           </div>
         </TabsContent>
@@ -196,7 +195,6 @@ export default function Dashboard() {
                   <Link href={`/divisions/${division.id}`}>
                     <Button variant="outline" className="w-full">View Scorecard</Button>
                   </Link>
-                  <Button onClick={() => deleteDivision(division.id)} variant="destructive">Delete Division</Button>
                 </CardContent>
               </Card>
             ))}
@@ -206,7 +204,7 @@ export default function Dashboard() {
         <TabsContent value="employees" className="space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Employees</h2>
-            <Button onClick={() => setEmployeeModalOpen(true)}>
+            <Button onClick={() => setEmployeeModalOpen(true)}> {/* Update to open employee modal */}
               <PlusCircle className="mr-2 h-4 w-4" /> Add Employee
             </Button>
           </div>
@@ -214,8 +212,15 @@ export default function Dashboard() {
             {employees.map((employee) => (
               <Card key={employee.id}>
                 <CardHeader>
-                  <CardTitle>{employee.first_name} {employee.last_name}</CardTitle>
+                  <CardTitle>
+                    <Link href={`/employees/${employee.id}`}>{employee.first_name} {employee.last_name}</Link>
+                  </CardTitle>
                 </CardHeader>
+                <CardContent>
+                  <Link href={`/employees/${employee.id}`}>
+                    <Button variant="outline" className="w-full">View Scorecard</Button>
+                  </Link>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -232,6 +237,8 @@ export default function Dashboard() {
           { label: 'Goal Name', placeholder: 'Enter goal name', name: 'name' },
           { label: 'Target', placeholder: 'Enter target', name: 'target' },
           { label: 'Current', placeholder: 'Enter current value', name: 'current' },
+          { label: 'Owner', placeholder: 'Enter owner name', name: 'owner' }, // New field for owner
+          { label: 'Progress (%)', placeholder: 'Enter progress', name: 'progress' }, // New field for progress
         ]}
       />
       <Modal
@@ -251,6 +258,7 @@ export default function Dashboard() {
         fields={[
           { label: 'First Name', placeholder: 'Enter first name', name: 'first_name' },
           { label: 'Last Name', placeholder: 'Enter last name', name: 'last_name' },
+          { label: 'Division ID', placeholder: 'Enter division ID', name: 'divisionId' }, // Assuming division relation
         ]}
       />
     </div>

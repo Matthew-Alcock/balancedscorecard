@@ -1,7 +1,19 @@
 import React from 'react';
 
-export const Card: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <div className="bg-white shadow rounded p-4">{children}</div>;
+interface CardProps {
+  children: React.ReactNode;
+  onClick?: () => void;  // Optional onClick prop to make the card clickable
+}
+
+export const Card: React.FC<CardProps> = ({ children, onClick }) => {
+  return (
+    <div 
+      className={`bg-white shadow rounded p-4 ${onClick ? 'cursor-pointer' : ''}`} 
+      onClick={onClick}
+    >
+      {children}
+    </div>
+  );
 };
 
 export const CardHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
